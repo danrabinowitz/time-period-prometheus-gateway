@@ -12,7 +12,6 @@ import (
 type exporter struct {
 	mu              sync.Mutex
 	namespace       string
-	subsystem       string
 	metricName      string
 	queryTemplate   string
 	promAPIQueryURL url.URL
@@ -20,11 +19,10 @@ type exporter struct {
 }
 
 // New creates a new Exporter
-func newExporter(namespace string, subsystem string, metricName string, queryTemplate string, promAPIQueryURL *url.URL, period string) (*exporter, error) {
+func newExporter(namespace string, metricName string, queryTemplate string, promAPIQueryURL *url.URL, period string) (*exporter, error) {
 
 	e := &exporter{
 		namespace:       namespace,
-		subsystem:       subsystem,
 		metricName:      metricName,
 		queryTemplate:   queryTemplate,
 		promAPIQueryURL: *promAPIQueryURL,
@@ -45,7 +43,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	labels := []string{}
 
 	promDesc := prometheus.NewDesc(
-		prometheus.BuildFQName(e.namespace, e.subsystem, e.metricName),
+		prometheus.BuildFQName(e.namespace, e.period, e.metricName),
 		e.metricName,
 		baseLabels,
 		nil,
@@ -92,7 +90,7 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 	baseLabels := []string{}
 
 	promDesc := prometheus.NewDesc(
-		prometheus.BuildFQName(e.namespace, e.subsystem, e.metricName),
+		prometheus.BuildFQName(e.namespace, e.period, e.metricName),
 		e.metricName,
 		baseLabels,
 		nil,

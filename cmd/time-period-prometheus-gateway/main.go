@@ -23,7 +23,6 @@ type config struct {
 	Listen             map[string]string `yaml:"listen"`
 	Metrics            []metric          `yaml:"metrics"`
 	Namespace          string            `yaml:"namespace"`
-	Subsystem          string            `yaml:"subsystem"`
 	PromAPIQueryString string            `yaml:"prometheus_api_query_url"`
 }
 
@@ -56,7 +55,6 @@ func main() {
 	}
 
 	namespace := config.Namespace
-	subsystem := config.Subsystem
 
 	// promAPIQueryString := "http://localhost:9090/api/v1/query"
 	promAPIQueryString := config.PromAPIQueryString
@@ -84,7 +82,7 @@ func main() {
 			log.Fatalf("period is required")
 		}
 
-		e, err := newExporter(namespace, subsystem, metricName, queryTemplate, promAPIQueryURL, period)
+		e, err := newExporter(namespace, metricName, queryTemplate, promAPIQueryURL, period)
 		if err != nil {
 			log.Fatalf("failed to create exporter: %v", err)
 		}
