@@ -1,0 +1,14 @@
+FROM golang:latest as build
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+
+# RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app ./cmd/time-period-prometheus-gateway
+RUN go build -o /app/app ./cmd/time-period-prometheus-gateway
+
+################################################################################
+FROM gcr.io/distroless/base-debian10
+COPY --from=build /app/app /
+CMD ["/app"]
