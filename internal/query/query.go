@@ -1,4 +1,4 @@
-package main
+package query
 
 import (
 	"errors"
@@ -7,7 +7,8 @@ import (
 	"time"
 )
 
-func queryFromTemplate(queryTemplate string, period string) (string, error) {
+// New returns a query with substitutions replaced
+func New(queryTemplate string, period string) (string, error) {
 	var duration int64
 
 	switch period {

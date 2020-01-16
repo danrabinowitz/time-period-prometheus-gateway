@@ -1,0 +1,5 @@
+prometheus_api_query_url: "http://localhost:9090/api/v1/query"
+metrics:
+  - name: "unifi_wan_receive_bytes_total"
+    query_template: "sum(increase(unifipoller_device_wan_receive_bytes_total[$DURATION]))"
+    period: "current_calendar_month"

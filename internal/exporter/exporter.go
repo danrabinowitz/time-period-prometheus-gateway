@@ -1,4 +1,4 @@
-package main
+package exporter
 
 import (
 	"log"
@@ -6,27 +6,31 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
+
+	"time-period-prometheus-gateway/internal/query"
 )
 
 // An exporter is a Prometheus exporter
 type exporter struct {
-	mu              sync.Mutex
-	namespace       string
-	metricName      string
-	queryTemplate   string
-	promAPIQueryURL url.URL
-	period          string
+	mu                sync.Mutex
+	namespace         string
+	metricName        string
+	queryTemplate     string
+	promAPIQueryURL   url.URL
+	period            string
+	prometheusFetcher func(u *url.URL) (float64, error)
 }
 
 // New creates a new Exporter
-func newExporter(namespace string, metricName string, queryTemplate string, promAPIQueryURL *url.URL, period string) (*exporter, error) {
+func New(namespace string, metricName string, queryTemplate string, promAPIQueryURL *url.URL, period string, prometheusFetcher func(u *url.URL) (float64, error)) (*exporter, error) {
 
 	e := &exporter{
-		namespace:       namespace,
-		metricName:      metricName,
-		queryTemplate:   queryTemplate,
-		promAPIQueryURL: *promAPIQueryURL,
-		period:          period,
+		namespace:         namespace,
+		metricName:        metricName,
+		queryTemplate:     queryTemplate,
+		promAPIQueryURL:   *promAPIQueryURL,
+		period:            period,
+		prometheusFetcher: prometheusFetcher,
 	}
 
 	return e, nil
@@ -63,24 +67,6 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	)
 }
 
-func (e *exporter) value() (float64, error) {
-	queryParam, err := queryFromTemplate(e.queryTemplate, e.period)
-	if err != nil {
-		log.Fatalln(err)
-		return 0, err
-	}
-
-	u := e.promAPIQueryURL
-	// Query params
-	params := url.Values{}
-	params.Add("query", queryParam)
-	u.RawQuery = params.Encode()
-
-	// log.Printf("url=%q", u.String())
-
-	return prometheusFetcher(&u)
-}
-
 // Describe sends all the descriptors of the collectors included to
 // the provided channel.
 func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
@@ -97,4 +83,21 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 	)
 
 	ch <- promDesc
+}
+
+func (e *exporter) value() (float64, error) {
+	queryParam, err := query.New(e.queryTemplate, e.period)
+	if err != nil {
+		return 0, err
+	}
+
+	u := e.promAPIQueryURL
+	// Query params
+	params := url.Values{}
+	params.Add("query", queryParam)
+	u.RawQuery = params.Encode()
+
+	// log.Printf("url=%q", u.String())
+
+	return e.prometheusFetcher(&u)
 }

@@ -1,13 +1,14 @@
-package main
+package prometheusclient
 
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 )
+
+// TODO: Expose a "LiveClient" and a "MockClient"
 
 // {"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1579065303.357,"17"]}]}}
 type dataType struct {
@@ -37,10 +38,10 @@ func (v *valueT) UnmarshalJSON(buf []byte) error {
 	return nil
 }
 
-func prometheusFetcher(u *url.URL) (float64, error) {
+// PrometheusFetcher fetches a promethetheus value from the url provided
+func PrometheusFetcher(u *url.URL) (float64, error) {
 	resp, err := http.Get(u.String())
 	if err != nil {
-		log.Fatalln(err)
 		return 0, err
 	}
 	defer resp.Body.Close()
@@ -54,7 +55,6 @@ func prometheusFetcher(u *url.URL) (float64, error) {
 	val := result.Data.Result[0].Value.Value
 	f, err := strconv.ParseFloat(val, 64)
 	if err != nil {
-		log.Fatalln(err)
 		return 0, err
 	}
 

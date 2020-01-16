@@ -5,21 +5,19 @@ DOCKER_REGISTRY=docker-registry.djrtechconsulting.com
 PROD_TAG=${DOCKER_REGISTRY}/${IMAGE_OWNER}/${NAME}:$(GITCOMMIT)
 
 .PHONY: build
-build: time-period-prometheus-gateway
-
-time-period-prometheus-gateway: cmd/time-period-prometheus-gateway/*.go
+build:
 	go build ./cmd/time-period-prometheus-gateway
 
 .PHONY: run
-run: time-period-prometheus-gateway
+run: build
 	./time-period-prometheus-gateway
 
 .PHONY: curl_test
 curl_test:
-	curl -s 'http://localhost:9130/metrics' | grep mnFoo
+	curl -s 'http://localhost:9130/metrics' | grep unifi_wan_receive_bytes_total
 
 .PHONY: docker
-docker:
+docker: test
 	docker build -t ${PROD_TAG} .
 
 .PHONY: run-docker
@@ -29,3 +27,13 @@ run-docker:
 .PHONY: publish
 publish: docker
 	docker push ${PROD_TAG}
+
+.PHONY: test
+test:
+	go test ./...
+
+.PHONY: coverage
+coverage:
+	go test ./... -coverprofile cover.out
+	go tool cover -func cover.out
+	# go tool cover -html cover.out
